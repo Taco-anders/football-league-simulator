@@ -61,37 +61,50 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name.trim() && canAddTeam) {
-      // Check if current division is full, if so, switch to next available
-      let targetDivisionId = formData.divisionId;
-      const targetDivision = divisions.find(d => d.id === targetDivisionId);
-      
-      if (targetDivision && targetDivision.teams.length >= maxTeamsPerDivision) {
-        const nextAvailable = getNextAvailableDivision();
-        if (nextAvailable) {
-          targetDivisionId = nextAvailable.id;
-        }
-      }
-
+    if (formData.name.trim()) {
       if (editingTeam) {
-        onUpdateTeam({
+        // When editing, preserve the original divisionId unless explicitly changed
+        const updatedTeam: Team = {
           ...editingTeam,
-          ...formData,
-          divisionId: targetDivisionId
-        });
-      } else {
-        onAddTeam({
-          ...formData,
-          divisionId: targetDivisionId
-        });
+          name: formData.name.trim(),
+          attackStrength: formData.attackStrength,
+          defenseStrength: formData.defenseStrength,
+          // Keep the original divisionId when editing (don't allow moving teams between divisions during edit)
+          divisionId: editingTeam.divisionId
+        };
         
-        // Auto-switch to next available division after adding
-        const updatedDivision = divisions.find(d => d.id === targetDivisionId);
-        if (updatedDivision && updatedDivision.teams.length + 1 >= maxTeamsPerDivision) {
+        console.log(`✏️ Updating team: ${editingTeam.name} → ${updatedTeam.name}`);
+        console.log(`📊 Stats: AK ${editingTeam.attackStrength} → ${updatedTeam.attackStrength}, FK ${editingTeam.defenseStrength} → ${updatedTeam.defenseStrength}`);
+        
+        onUpdateTeam(updatedTeam);
+      } else {
+        // When adding new team, check if current division is full
+        let targetDivisionId = formData.divisionId;
+        const targetDivision = divisions.find(d => d.id === targetDivisionId);
+        
+        if (targetDivision && targetDivision.teams.length >= maxTeamsPerDivision) {
           const nextAvailable = getNextAvailableDivision();
-          if (nextAvailable && nextAvailable.id !== targetDivisionId) {
-            setSelectedDivision(nextAvailable.id);
-            setFormData(prev => ({ ...prev, divisionId: nextAvailable.id }));
+          if (nextAvailable) {
+            targetDivisionId = nextAvailable.id;
+          }
+        }
+
+        if (canAddTeam) {
+          onAddTeam({
+            name: formData.name.trim(),
+            attackStrength: formData.attackStrength,
+            defenseStrength: formData.defenseStrength,
+            divisionId: targetDivisionId
+          });
+          
+          // Auto-switch to next available division after adding
+          const updatedDivision = divisions.find(d => d.id === targetDivisionId);
+          if (updatedDivision && updatedDivision.teams.length + 1 >= maxTeamsPerDivision) {
+            const nextAvailable = getNextAvailableDivision();
+            if (nextAvailable && nextAvailable.id !== targetDivisionId) {
+              setSelectedDivision(nextAvailable.id);
+              setFormData(prev => ({ ...prev, divisionId: nextAvailable.id }));
+            }
           }
         }
       }
@@ -111,19 +124,27 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
   };
 
   const startEdit = (team: Team) => {
+    console.log(`✏️ Starting edit for team: ${team.name} in division ${team.divisionId}`);
+    
     setEditingTeam(team);
     setFormData({
       name: team.name,
       attackStrength: team.attackStrength,
       defenseStrength: team.defenseStrength,
-      divisionId: team.divisionId
+      divisionId: team.divisionId // Keep the team's current division
     });
     setShowForm(true);
+    
+    // Switch to the team's division when editing
+    setSelectedDivision(team.divisionId);
   };
 
   const handleDivisionChange = (divisionId: string) => {
     setSelectedDivision(divisionId);
-    setFormData(prev => ({ ...prev, divisionId }));
+    // Only update form divisionId if we're not editing a team
+    if (!editingTeam) {
+      setFormData(prev => ({ ...prev, divisionId }));
+    }
   };
 
   const getStrengthColor = (strength: number) => {
@@ -152,9 +173,9 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-semibold text-gray-900">Team Management</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Team Management</h2>
           <select
             value={selectedDivision}
             onChange={(e) => handleDivisionChange(e.target.value)}
@@ -171,10 +192,10 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
             })}
           </select>
         </div>
-        {canAddTeam && (
+        {canAddTeam && !editingTeam && (
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors w-full sm:w-auto"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Team
@@ -183,7 +204,7 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
       </div>
 
       {/* Division Status Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {divisions.map(division => {
           const status = getDivisionStatus(division);
           return (
@@ -218,7 +239,7 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
         })}
       </div>
 
-      {allDivisionsFull && (
+      {allDivisionsFull && !editingTeam && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -236,9 +257,9 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
       )}
 
       {showForm && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {editingTeam ? 'Edit Team' : 'Add New Team'}
+            {editingTeam ? `Edit Team: ${editingTeam.name}` : 'Add New Team'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -255,6 +276,14 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
                 required
               />
             </div>
+
+            {editingTeam && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-700">
+                  <strong>Note:</strong> When editing a team, it will remain in its current division ({divisions.find(d => d.id === editingTeam.divisionId)?.name}).
+                </p>
+              </div>
+            )}
 
             {!editingTeam && (
               <div>
@@ -286,7 +315,7 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
               </div>
             )}
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <div className="flex items-center mb-2">
                   <Zap className="w-5 h-5 text-orange-600 mr-2" />
@@ -332,11 +361,10 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
               </div>
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 type="submit"
-                disabled={!canAddTeam}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 {editingTeam ? 'Update Team' : 'Add Team'}
               </button>
@@ -354,9 +382,9 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
 
       {currentDivision && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">{currentDivision.name}</h3>
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">{currentDivision.name}</h3>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">
                   {currentDivision.teams.length}/{maxTeamsPerDivision} teams
@@ -388,11 +416,11 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
           ) : (
             <div className="divide-y divide-gray-200">
               {currentDivision.teams.map((team) => (
-                <div key={team.id} className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
+                <div key={team.id} className="px-4 sm:px-6 py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex-1 mb-4 sm:mb-0">
                       <h4 className="text-lg font-medium text-gray-900">{team.name}</h4>
-                      <div className="flex items-center space-x-6 mt-2">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6 mt-2">
                         <div className="flex items-center">
                           <Zap className="w-4 h-4 text-orange-600 mr-1" />
                           <span className="text-sm text-gray-600 mr-2">Attack:</span>
@@ -413,12 +441,14 @@ export const TeamManager: React.FC<TeamManagerProps> = ({
                       <button
                         onClick={() => startEdit(team)}
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit team"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onDeleteTeam(team.id)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete team"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

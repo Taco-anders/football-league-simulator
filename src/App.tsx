@@ -203,8 +203,69 @@ function App() {
     regenerateSchedule(updatedLeague, targetDivisionId);
   };
 
+  // NEW: Function to update team name in all historical data
+  const updateTeamNameInHistory = (league: League, teamId: string, newName: string): League => {
+    console.log(`📝 Updating team name in historical data: ${teamId} → ${newName}`);
+    
+    // Update season history
+    const updatedSeasonHistory = league.seasonHistory.map(season => ({
+      ...season,
+      divisions: season.divisions.map(division => ({
+        ...division,
+        finalStandings: division.finalStandings.map(standing => 
+          standing.teamId === teamId 
+            ? { ...standing, teamName: newName }
+            : standing
+        )
+      })),
+      matches: season.matches.map(match => ({
+        ...match,
+        homeTeamName: match.homeTeamId === teamId ? newName : match.homeTeamName,
+        awayTeamName: match.awayTeamId === teamId ? newName : match.awayTeamName
+      }))
+    }));
+
+    // Update all-time statistics
+    const updatedAllTimeStats = {
+      division1Marathon: league.allTimeStats.division1Marathon.map(entry =>
+        entry.teamId === teamId ? { ...entry, teamName: newName } : entry
+      ),
+      championships: league.allTimeStats.championships.map(entry =>
+        entry.teamId === teamId ? { ...entry, teamName: newName } : entry
+      ),
+      lastPlaceInLowest: league.allTimeStats.lastPlaceInLowest.map(entry =>
+        entry.teamId === teamId ? { ...entry, teamName: newName } : entry
+      ),
+      positionPoints: league.allTimeStats.positionPoints.map(entry =>
+        entry.teamId === teamId ? { ...entry, teamName: newName } : entry
+      ),
+      promotionsRelegations: league.allTimeStats.promotionsRelegations.map(entry =>
+        entry.teamId === teamId ? { ...entry, teamName: newName } : entry
+      )
+    };
+
+    console.log(`✅ Updated team name in all historical data for ${newName}`);
+
+    return {
+      ...league,
+      seasonHistory: updatedSeasonHistory,
+      allTimeStats: updatedAllTimeStats
+    };
+  };
+
   const updateTeam = (updatedTeam: Team) => {
     if (!currentLeague) return;
+
+    console.log(`🔄 Updating team: ${updatedTeam.name}`);
+
+    // Find the old team to check if name changed
+    let oldTeamName = '';
+    currentLeague.divisions.forEach(div => {
+      const oldTeam = div.teams.find(team => team.id === updatedTeam.id);
+      if (oldTeam) {
+        oldTeamName = oldTeam.name;
+      }
+    });
 
     const updatedLeague = {
       ...currentLeague,
@@ -214,8 +275,17 @@ function App() {
       }))
     };
 
-    setCurrentLeague(updatedLeague);
-    setLeagues(prev => prev.map(l => l.id === updatedLeague.id ? updatedLeague : l));
+    // If team name changed, update historical data
+    if (oldTeamName && oldTeamName !== updatedTeam.name) {
+      console.log(`📝 Team name changed: ${oldTeamName} → ${updatedTeam.name}`);
+      const leagueWithUpdatedHistory = updateTeamNameInHistory(updatedLeague, updatedTeam.id, updatedTeam.name);
+      
+      setCurrentLeague(leagueWithUpdatedHistory);
+      setLeagues(prev => prev.map(l => l.id === leagueWithUpdatedHistory.id ? leagueWithUpdatedHistory : l));
+    } else {
+      setCurrentLeague(updatedLeague);
+      setLeagues(prev => prev.map(l => l.id === updatedLeague.id ? updatedLeague : l));
+    }
   };
 
   const deleteTeam = (teamId: string) => {
@@ -380,28 +450,28 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:h-16">
+            <div className="mb-4 sm:mb-0">
               <h1 className="text-xl font-semibold text-gray-900">{currentLeague.name}</h1>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0">
                 <p className="text-sm text-gray-500">Säsong {currentLeague.currentSeason}</p>
                 {seasonComplete && (
-                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full w-fit">
                     Säsong slutförd!
                   </span>
                 )}
                 {currentLeague.seasonHistory.length > 0 && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full w-fit">
                     {currentLeague.seasonHistory.length} slutförda säsonger
                   </span>
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
               {seasonComplete && (
                 <button
                   onClick={handleStartNextSeason}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold w-full sm:w-auto justify-center"
                 >
                   <ArrowRight className="w-4 h-4 mr-2" />
                   Starta Säsong {currentLeague.currentSeason + 1}
@@ -409,14 +479,14 @@ function App() {
               )}
               <button
                 onClick={applySeasonAdjustments}
-                className="inline-flex items-center px-3 py-2 text-sm text-purple-600 hover:text-purple-700 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
+                className="inline-flex items-center px-3 py-2 text-sm text-purple-600 hover:text-purple-700 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors w-full sm:w-auto justify-center"
               >
                 <Shuffle className="w-4 h-4 mr-2" />
                 Season Adjustments
               </button>
               <button
                 onClick={() => setCurrentLeague(null)}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto text-center"
               >
                 Back to Leagues
               </button>
@@ -427,14 +497,14 @@ function App() {
 
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+          <div className="flex space-x-4 sm:space-x-8 overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center px-1 py-4 border-b-2 text-sm font-medium transition-colors ${
+                  className={`flex items-center px-1 py-4 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'border-green-500 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

@@ -290,10 +290,10 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
   return (
     <div className="space-y-6">
       {/* Division Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">{division.name}</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="mb-4 sm:mb-0">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">{division.name}</h2>
             <p className="text-gray-600">Level {division.level} • {division.teams.length} teams</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -311,22 +311,22 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-600">{playedMatches}</div>
-            <div className="text-sm text-gray-600">Matches Played</div>
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{playedMatches}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Matches Played</div>
           </div>
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-600">{unplayedMatches.length}</div>
-            <div className="text-sm text-gray-600">Remaining</div>
+          <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{unplayedMatches.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Remaining</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-purple-600">{currentRound}</div>
-            <div className="text-sm text-gray-600">Current Round</div>
+          <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">{currentRound}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Current Round</div>
           </div>
-          <div className="bg-orange-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-orange-600">{maxRound}</div>
-            <div className="text-sm text-gray-600">Total Rounds</div>
+          <div className="bg-orange-50 rounded-lg p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">{maxRound}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Total Rounds</div>
           </div>
         </div>
 
@@ -363,11 +363,11 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
           <button
             onClick={simulateRoundLive}
             disabled={isSimulating || unplayedMatches.length === 0}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isSimulating ? (
               <Pause className="w-5 h-5 mr-2" />
@@ -380,7 +380,7 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
           <button
             onClick={simulateAllInstant}
             disabled={isSimulating || unplayedMatches.length === 0}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             <Zap className="w-5 h-5 mr-2" />
             Visa Alla Resultat
@@ -389,7 +389,7 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
           <button
             onClick={resetDivision}
             disabled={isSimulating || playedMatches === 0}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
           >
             <RotateCcw className="w-5 h-5 mr-2" />
             Reset Division
@@ -400,10 +400,10 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
       {/* View Toggle */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto">
             <button
               onClick={() => setActiveView('matches')}
-              className={`flex items-center px-1 py-4 border-b-2 text-sm font-medium transition-colors ${
+              className={`flex items-center px-1 py-4 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeView === 'matches'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -414,7 +414,7 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
             </button>
             <button
               onClick={() => setActiveView('standings')}
-              className={`flex items-center px-1 py-4 border-b-2 text-sm font-medium transition-colors ${
+              className={`flex items-center px-1 py-4 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeView === 'standings'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -426,25 +426,25 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeView === 'matches' ? (
             <div>
               {/* Round Navigation */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Round {currentRound} Matches
                   {isSimulating && liveMatches.length > 0 && (
                     <span className="ml-2 text-red-600 text-sm font-normal animate-pulse">● LIVE</span>
                   )}
                 </h3>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-center space-x-2">
                   <button
                     onClick={() => setCurrentRound(Math.max(1, currentRound - 1))}
                     disabled={currentRound <= 1 || isSimulating}
                     className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
                   </button>
                   <span className="text-sm text-gray-500 px-3">
                     {currentRound} / {maxRound}
@@ -454,7 +454,7 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
                     disabled={currentRound >= maxRound || isSimulating}
                     className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Next
+                    <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </button>
                 </div>
@@ -466,7 +466,7 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
                   No matches in round {currentRound}
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {currentRoundMatches.map((match) => {
                     const homeTeam = getTeamById(match.homeTeamId);
                     const awayTeam = getTeamById(match.awayTeamId);
@@ -490,15 +490,15 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="text-right flex-1">
-                            <div className="font-medium">{homeTeam.name}</div>
+                          <div className="text-right flex-1 min-w-0">
+                            <div className="font-medium truncate">{homeTeam.name}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               AK:{homeTeam.attackStrength.toFixed(2)} FK:{homeTeam.defenseStrength.toFixed(2)}
                             </div>
                           </div>
-                          <div className="text-center min-w-[100px] mx-4">
+                          <div className="text-center min-w-[80px] sm:min-w-[100px] mx-2 sm:mx-4">
                             {match.played || isLive ? (
-                              <div className={`text-xl font-bold ${isLive ? 'text-red-600' : 'text-gray-900'}`}>
+                              <div className={`text-lg sm:text-xl font-bold ${isLive ? 'text-red-600' : 'text-gray-900'}`}>
                                 {displayHomeScore} - {displayAwayScore}
                               </div>
                             ) : (
@@ -510,8 +510,8 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
                               </div>
                             )}
                           </div>
-                          <div className="text-left flex-1">
-                            <div className="font-medium">{awayTeam.name}</div>
+                          <div className="text-left flex-1 min-w-0">
+                            <div className="font-medium truncate">{awayTeam.name}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               AK:{awayTeam.attackStrength.toFixed(2)} FK:{awayTeam.defenseStrength.toFixed(2)}
                             </div>
@@ -532,16 +532,16 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <th className="px-4 py-3">Pos</th>
-                      <th className="px-4 py-3">Team</th>
-                      <th className="px-4 py-3 text-center">P</th>
-                      <th className="px-4 py-3 text-center">W</th>
-                      <th className="px-4 py-3 text-center">D</th>
-                      <th className="px-4 py-3 text-center">L</th>
-                      <th className="px-4 py-3 text-center">GF</th>
-                      <th className="px-4 py-3 text-center">GA</th>
-                      <th className="px-4 py-3 text-center">GD</th>
-                      <th className="px-4 py-3 text-center">Pts</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3">Pos</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3">Team</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">P</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">W</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">D</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">L</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">GF</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">GA</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">GD</th>
+                      <th className="px-2 py-2 sm:px-4 sm:py-3 text-center">Pts</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -556,45 +556,45 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
                           key={stats.teamId} 
                           className={`hover:bg-gray-50 ${getPositionBg(position)}`}
                         >
-                          <td className="px-4 py-3 whitespace-nowrap">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                             <div className="flex items-center space-x-2">
                               <span className="text-sm font-medium text-gray-900">{position}</span>
                               {getPositionIcon(position)}
                             </div>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{team.name}</div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">{team.name}</div>
+                              <div className="text-xs text-gray-500 hidden sm:block">
                                 AK:{team.attackStrength.toFixed(2)} FK:{team.defenseStrength.toFixed(2)}
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm text-gray-900">
                             {stats.played}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm text-gray-900">
                             {stats.won}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm text-gray-900">
                             {stats.drawn}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm text-gray-900">
                             {stats.lost}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm text-gray-900">
                             {stats.goalsFor}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm text-gray-900">
                             {stats.goalsAgainst}
                           </td>
-                          <td className={`px-4 py-3 whitespace-nowrap text-center text-sm font-medium ${
+                          <td className={`px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm font-medium ${
                             stats.goalDifference > 0 ? 'text-green-600' : 
                             stats.goalDifference < 0 ? 'text-red-600' : 'text-gray-900'
                           }`}>
                             {stats.goalDifference > 0 ? '+' : ''}{stats.goalDifference}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-900">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center text-sm font-bold text-gray-900">
                             {stats.points}
                           </td>
                         </tr>
@@ -605,7 +605,7 @@ export const DivisionSimulator: React.FC<DivisionSimulatorProps> = ({
               </div>
 
               {/* Legend */}
-              <div className="mt-6 flex items-center space-x-6 text-xs text-gray-600">
+              <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-6 text-xs text-gray-600">
                 {league.settings.promotionCount > 0 && division.level > 1 && (
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-green-500 rounded"></div>
