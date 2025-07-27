@@ -1,4 +1,4 @@
-import { League, SeasonHistory, DivisionSeasonResult, TeamSeasonResult, HistoricalMatch, AllTimeStats, MarathonEntry, ChampionshipEntry, LastPlaceEntry, PositionPointsEntry, PromotionRelegationEntry, Team, Division, Match } from '../types';
+import { League, SeasonHistory, DivisionSeasonResult, TeamSeasonResult, HistoricalMatch, AllTimeStats, MarathonEntry, ChampionshipEntry, LastPlaceEntry, PositionPointsEntry, PromotionRelegationEntry, SeasonsPerDivisionEntry, AllDivisionsPositionMarathonEntry, Team, Division, Match } from '../types';
 import { calculateStandings, sortStandings } from './simulation';
 import { generateSchedule } from './schedule';
 
@@ -305,6 +305,8 @@ export const updateAllTimeStats = (
   const lastPlaceInLowest: LastPlaceEntry[] = [];
   const positionPoints: PositionPointsEntry[] = [];
   const promotionsRelegations: PromotionRelegationEntry[] = [];
+  const seasonsPerDivision: SeasonsPerDivisionEntry[] = [];
+  const allDivisionsPositionMarathon: AllDivisionsPositionMarathonEntry[] = [];
 
   // Process each team
   allTeams.forEach((teamName, teamId) => {
@@ -337,6 +339,18 @@ export const updateAllTimeStats = (
     if (promRelStats.promotions > 0 || promRelStats.relegations > 0) {
       promotionsRelegations.push(promRelStats);
     }
+
+    // NEW: Seasons per division
+    const seasonsPerDivStats = calculateSeasonsPerDivisionStats(teamId, teamName, seasonHistory);
+    if (seasonsPerDivStats.totalSeasons > 0) {
+      seasonsPerDivision.push(seasonsPerDivStats);
+    }
+
+    // NEW: All divisions position marathon
+    const allDivPositionStats = calculateAllDivisionsPositionMarathonStats(teamId, teamName, seasonHistory, league.settings.teamsPerDivision, league.divisions.length);
+    if (allDivPositionStats.totalSeasons > 0) {
+      allDivisionsPositionMarathon.push(allDivPositionStats);
+    }
   });
 
   // Sort tables
@@ -351,12 +365,32 @@ export const updateAllTimeStats = (
   positionPoints.sort((a, b) => b.totalPositionPoints - a.totalPositionPoints);
   promotionsRelegations.sort((a, b) => (b.promotions - b.relegations) - (a.promotions - a.relegations));
 
+  // NEW: Sort seasons per division (prioritize div 1 seasons, then div 2, etc.)
+  seasonsPerDivision.sort((a, b) => {
+    // First sort by div 1 seasons (descending)
+    const aDivisions = Object.keys(a.divisionBreakdown).map(Number).sort((x, y) => x - y);
+    const bDivisions = Object.keys(b.divisionBreakdown).map(Number).sort((x, y) => x - y);
+    
+    for (const divLevel of [1, 2, 3, 4, 5]) {
+      const aSeasons = a.divisionBreakdown[divLevel] || 0;
+      const bSeasons = b.divisionBreakdown[divLevel] || 0;
+      if (bSeasons !== aSeasons) return bSeasons - aSeasons;
+    }
+    
+    return b.totalSeasons - a.totalSeasons;
+  });
+
+  // NEW: Sort all divisions position marathon by total position points
+  allDivisionsPositionMarathon.sort((a, b) => b.totalPositionPoints - a.totalPositionPoints);
+
   return {
     division1Marathon,
     championships,
     lastPlaceInLowest,
     positionPoints,
-    promotionsRelegations
+    promotionsRelegations,
+    seasonsPerDivision,
+    allDivisionsPositionMarathon
   };
 };
 
@@ -604,5 +638,104 @@ const calculatePromotionRelegationStats = (teamId: string, teamName: string, sea
     relegations,
     promotionSeasons,
     relegationSeasons
+  };
+};
+
+// NEW: Calculate seasons per division statistics
+const calculateSeasonsPerDivisionStats = (teamId: string, teamName: string, seasonHistory: SeasonHistory[]): SeasonsPerDivisionEntry => {
+  const divisionBreakdown: Record<number, number> = {};
+  let totalSeasons = 0;
+
+  console.log(`📊 Calculating seasons per division for ${teamName}`);
+
+  seasonHistory.forEach(season => {
+    season.divisions.forEach(division => {
+      const teamResult = division.finalStandings.find(t => t.teamId === teamId);
+      if (teamResult) {
+        const divLevel = division.divisionLevel;
+        divisionBreakdown[divLevel] = (divisionBreakdown[divLevel] || 0) + 1;
+        totalSeasons++;
+        console.log(`📈 ${teamName} played in Division ${divLevel} during season ${season.season}`);
+      }
+    });
+  });
+
+  console.log(`✅ ${teamName} total seasons: ${totalSeasons}, breakdown:`, divisionBreakdown);
+
+  return {
+    teamId,
+    teamName,
+    totalSeasons,
+    divisionBreakdown
+  };
+};
+
+// NEW: Calculate all divisions position marathon statistics - CORRECTED VERSION
+const calculateAllDivisionsPositionMarathonStats = (
+  teamId: string, 
+  teamName: string, 
+  seasonHistory: SeasonHistory[], 
+  teamsPerDivision: number, 
+  totalDivisions: number
+): AllDivisionsPositionMarathonEntry => {
+  let totalPositionPoints = 0;
+  let totalSeasons = 0;
+  
+  const divisionBreakdown: Array<{ divisionLevel: number; seasons: number; points: number; }> = [];
+
+  console.log(`🏆 Calculating all divisions marathon for ${teamName}`);
+  console.log(`📊 Teams per division: ${teamsPerDivision}, Total divisions: ${totalDivisions}`);
+
+  // Initialize division breakdown
+  for (let divLevel = 1; divLevel <= totalDivisions; divLevel++) {
+    divisionBreakdown.push({
+      divisionLevel: divLevel,
+      seasons: 0,
+      points: 0
+    });
+  }
+
+  seasonHistory.forEach(season => {
+    season.divisions.forEach(division => {
+      const teamResult = division.finalStandings.find(t => t.teamId === teamId);
+      if (teamResult) {
+        const divLevel = division.divisionLevel;
+        
+        // CORRECTED: Använd faktiska säsongspoäng × divisionsbonus
+        const actualSeasonPoints = teamResult.points; // Faktiska poäng från säsongen
+        
+        // Divisionsbonus: Division 1 = x3, Division 2 = x2, Division 3 = x1
+        // Högre division = högre multiplikator (fördel för högre divisioner)
+        const divisionMultiplier = totalDivisions - divLevel + 1;
+        
+        // Slutlig poäng = faktiska säsongspoäng × divisionsmultiplikator
+        const finalPoints = actualSeasonPoints * divisionMultiplier;
+        
+        totalPositionPoints += finalPoints;
+        totalSeasons++;
+        
+        // Update division breakdown
+        const divBreakdown = divisionBreakdown.find(d => d.divisionLevel === divLevel);
+        if (divBreakdown) {
+          divBreakdown.seasons++;
+          divBreakdown.points += finalPoints;
+        }
+        
+        console.log(`📊 ${teamName} S${season.season} Div${divLevel}: ${actualSeasonPoints}p × ${divisionMultiplier} = ${finalPoints}p`);
+      }
+    });
+  });
+
+  const averagePositionPoints = totalSeasons > 0 ? Math.round((totalPositionPoints / totalSeasons) * 10) / 10 : 0;
+
+  console.log(`✅ ${teamName} total position points: ${totalPositionPoints}, average: ${averagePositionPoints}`);
+
+  return {
+    teamId,
+    teamName,
+    totalPositionPoints,
+    totalSeasons,
+    averagePositionPoints,
+    divisionBreakdown: divisionBreakdown.filter(d => d.seasons > 0)
   };
 };

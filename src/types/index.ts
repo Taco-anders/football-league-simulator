@@ -115,6 +115,12 @@ export interface AllTimeStats {
   
   // Uppflyttningar och nedflyttningar
   promotionsRelegations: PromotionRelegationEntry[];
+  
+  // NEW: Säsonger per division
+  seasonsPerDivision: SeasonsPerDivisionEntry[];
+  
+  // NEW: Maratontabell för alla divisioner baserad på position
+  allDivisionsPositionMarathon: AllDivisionsPositionMarathonEntry[];
 }
 
 export interface MarathonEntry {
@@ -164,4 +170,26 @@ export interface PromotionRelegationEntry {
   relegations: number;
   promotionSeasons: number[];
   relegationSeasons: number[];
+}
+
+// NEW: Säsonger per division
+export interface SeasonsPerDivisionEntry {
+  teamId: string;
+  teamName: string;
+  totalSeasons: number;
+  divisionBreakdown: Record<number, number>; // divisionLevel -> antal säsonger
+}
+
+// NEW: Maratontabell för alla divisioner baserad på position
+export interface AllDivisionsPositionMarathonEntry {
+  teamId: string;
+  teamName: string;
+  totalPositionPoints: number;
+  totalSeasons: number;
+  averagePositionPoints: number;
+  divisionBreakdown: Array<{
+    divisionLevel: number;
+    seasons: number;
+    points: number;
+  }>;
 }
